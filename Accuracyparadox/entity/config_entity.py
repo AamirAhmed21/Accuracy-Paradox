@@ -32,3 +32,34 @@ class DataIngestionConfig:
         self.train_data_path = os.path.join(self.data_ingestion_dir,   DATA_INGESTION_INGESTED_DIR,
             TRAIN_FILE_NAME)
         self.test_data_path = os.path.join(self.data_ingestion_dir, DATA_INGESTION_TEST_DATA_DIR, TEST_FILE_NAME)
+# ─────────────────────────────────────────
+# 2. Data Validation Config
+# ─────────────────────────────────────────
+@dataclass
+class DataValidationConfig:
+    training_pipeline_config: TrainingPipelineConfig = field(default_factory=TrainingPipelineConfig)
+    data_validation_dir: str = field(default="")
+    validated_data_dir: str = field(default="")
+    
+    def __post_init__(self):
+        self.data_validation_dir = os.path.join(self.training_pipeline_config.artifact_dir, DATA_VALIDATION_DIR_NAME)
+        self.validation_report_file_path = os.path.join(
+            self.data_validation_dir,
+            VALIDATION_REPORT_FILE_NAME
+        )
+# ─────────────────────────────────────────
+# 3. Data Transformation Config
+# ─────────────────────────────────────────
+@dataclass
+class DataTransformationConfig:
+    training_pipeline_config: TrainingPipelineConfig = field(default_factory=TrainingPipelineConfig)
+    data_transformation_dir: str = field(default="")
+    transformed_train_data_path: str = field(default="")
+    transformed_test_data_path: str = field(default="")
+    preprocessor_object_path: str = field(default="")
+    
+    def __post_init__(self):
+        self.data_transformation_dir = os.path.join(self.training_pipeline_config.artifact_dir, DATA_TRANSFORMATION_DIR_NAME)
+        self.transformed_train_data_path = os.path.join(self.data_transformation_dir, TRANSFORMED_DIR_NAME, TRANSFORMED_TRAIN_FILE_NAME)
+        self.transformed_test_data_path = os.path.join(self.data_transformation_dir, TRANSFORMED_DIR_NAME, TRANSFORMED_TEST_FILE_NAME)
+        self.preprocessor_object_path = os.path.join(self.data_transformation_dir, PREPROCESSOR_DIR_NAME, PREPROCESSOR_FILE_NAME)

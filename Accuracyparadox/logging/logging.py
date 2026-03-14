@@ -2,14 +2,19 @@ import logging
 import os
 from datetime import datetime
 
-LOG_FILE = f'{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.log'
+# Use project-root logs folder (stable, not dependent on current working dir)
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+LOG_DIR = os.path.join(ROOT_DIR, "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
 
-log_path = os.path.join(os.getcwd(), 'logs')
-os.makedirs(log_path, exist_ok=True)
-log_file_path = os.path.join(log_path, LOG_FILE)
+LOG_FILE = f'{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.log'
+LOG_FILE_PATH = os.path.join(LOG_DIR, LOG_FILE)
 
 logging.basicConfig(
-    filename=log_file_path,
+    filename=LOG_FILE_PATH,
     format='%(asctime)s - %(levelname)s - %(message)s',
     level=logging.INFO,
 )
+
+# Export this and use it in components
+logger = logging.getLogger("AccuracyParadox")
