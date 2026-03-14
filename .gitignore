@@ -1,4 +1,50 @@
-venv
-.env
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# IDE / editor
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Project runtime outputs
 artifacts/
 logs/
+mlruns/
+mlflow.db
+*.log
+
+# Model and data artifacts
+*.pkl
+*.joblib
+*.npy
+*.csv
+
+# BentoML local store
+bentoml/
+.bentoml/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Env / secrets
+.env
+.env.*
+*.key
+*.pem

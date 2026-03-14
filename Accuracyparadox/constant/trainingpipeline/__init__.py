@@ -33,10 +33,19 @@ VALIDATION_REPORT_FILE_NAME: str = "validation_report.json"
 # ─────────────────────────────────────────
 
 DATA_TRANSFORMATION_DIR_NAME: str = "data_transformation"
-TRANSFORMED_DIR_NAME: str = "transformed_data"
-PREPROCESSOR_DIR_NAME: str = "preprocessor"
-PREPROCESSOR_FILE_NAME: str = "preprocessor.pkl"
-TRANSFORMED_TRAIN_FILE_NAME: str = "transformed_train.csv"
-TRANSFORMED_TEST_FILE_NAME: str = "transformed_test.csv"
+TRANSFORMED_DATA_DIR_NAME: str = "transformed_data"
+TRANSFORMED_TRAIN_FILE_NAME: str = "train.npy"
+TRANSFORMED_TEST_FILE_NAME: str = "test.npy"
+PREPROCESSOR_OBJECT_FILE_NAME: str = "preprocessor.pkl"
 
 TARGET_COLUMN: str = "target"
+
+# ─────────────────────────────────────────
+# Model Training
+# ─────────────────────────────────────────
+MODEL_TRAINER_DIR_NAME: str = 'model_trainer'
+MODEL_OBJECT_FILE_NAME: str = 'model.pkl'
+MODEL_METRICS_FILE_NAME: str = 'metrics.json'
+MODEL_TRAINER_EXPECTED_SCORE: float = 0.6
+MLFLOW_EXPERIMENT_NAME: str = 'AccuracyParadox_Experiment'
+BENTOML_MODEL_NAME: str = "accuracy_paradox_model"

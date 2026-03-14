@@ -1,4 +1,5 @@
 import sys
+from venv import logger
 
 from Accuracyparadox.exception.exception import CustomException
 from Accuracyparadox.logging import logging
@@ -8,12 +9,14 @@ from Accuracyparadox.entity.config_entity import (
     DataIngestionConfig,
     DataValidationConfig,
     DataTransformationConfig,
+    ModelTrainerConfig
 )
 
 from Accuracyparadox.Components.synthetic_data_generator import SyntheticDataGenerator
 from Accuracyparadox.Components.data_ingestion import DataIngestion
 from Accuracyparadox.Components.data_validation import DataValidation
 from Accuracyparadox.Components.data_tranformation import DataTransformation
+from Accuracyparadox.Components.Model import ModelTrainer
 
 
 class TrainingPipeline:
@@ -59,10 +62,17 @@ class TrainingPipeline:
             data_transformation_artifact = data_transformation.initiate_data_transformation()
             logging.info(f"DataTransformationArtifact: {data_transformation_artifact}")
             
+            # 4 Model Training
+            model_trainer_config = ModelTrainerConfig(training_pipeline_config=self.training_pipeline_config)
+            model_trainer = ModelTrainer(model_trainer_config=model_trainer_config, data_transformation_artifact=data_transformation_artifact)
+            model_trainer_artifact = model_trainer.initiate_model_trainer()
+            
+            logging.info("========== Training Pipeline Completed ==========")
             return (
                 data_ingestion_artifact,
                 data_validation_artifact,
-                data_transformation_artifact
+                data_transformation_artifact,
+                model_trainer_artifact
             )
             
         except Exception as e:

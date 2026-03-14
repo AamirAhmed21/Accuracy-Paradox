@@ -60,6 +60,35 @@ class DataTransformationConfig:
     
     def __post_init__(self):
         self.data_transformation_dir = os.path.join(self.training_pipeline_config.artifact_dir, DATA_TRANSFORMATION_DIR_NAME)
-        self.transformed_train_data_path = os.path.join(self.data_transformation_dir, TRANSFORMED_DIR_NAME, TRANSFORMED_TRAIN_FILE_NAME)
-        self.transformed_test_data_path = os.path.join(self.data_transformation_dir, TRANSFORMED_DIR_NAME, TRANSFORMED_TEST_FILE_NAME)
-        self.preprocessor_object_path = os.path.join(self.data_transformation_dir, PREPROCESSOR_DIR_NAME, PREPROCESSOR_FILE_NAME)
+        self.transformed_train_data_path = os.path.join(
+            self.data_transformation_dir,
+            TRANSFORMED_DATA_DIR_NAME,
+            TRANSFORMED_TRAIN_FILE_NAME,
+        )
+        self.transformed_test_data_path = os.path.join(
+            self.data_transformation_dir,
+            TRANSFORMED_DATA_DIR_NAME,
+            TRANSFORMED_TEST_FILE_NAME,
+        )
+        self.preprocessor_object_path = os.path.join(
+            self.data_transformation_dir,
+            TRANSFORMED_DATA_DIR_NAME,
+            PREPROCESSOR_OBJECT_FILE_NAME,
+        )
+# ─────────────────────────────────────────
+# 4. Model Config
+# ───────────────────────────────────────── 
+@dataclass
+class ModelTrainerConfig:
+    training_pipeline_config: TrainingPipelineConfig = field(default_factory=TrainingPipelineConfig)
+    model_trainer_dir: str = field(default="")
+    trained_model_file_path: str = field(default="")
+    model_metrics_file_path: str = field(default="")
+    expected_score: float = field(default=MODEL_TRAINER_EXPECTED_SCORE)
+    mlflow_experiment_name: str = field(default=MLFLOW_EXPERIMENT_NAME)
+    bentoml_model_name: str = field(default=BENTOML_MODEL_NAME)
+    
+    def __post_init__(self):
+        self.model_trainer_dir = os.path.join(self.training_pipeline_config.artifact_dir, MODEL_TRAINER_DIR_NAME)
+        self.trained_model_file_path = os.path.join(self.model_trainer_dir, MODEL_OBJECT_FILE_NAME)
+        self.model_metrics_file_path = os.path.join(self.model_trainer_dir, MODEL_METRICS_FILE_NAME)
