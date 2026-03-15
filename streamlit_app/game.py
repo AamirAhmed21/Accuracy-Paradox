@@ -2,7 +2,9 @@ import sys
 import numpy as np
 import pandas as pd
 import streamlit as st
-
+import requests
+import time
+import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 from sklearn.dummy import DummyClassifier
@@ -17,6 +19,8 @@ from sklearn.metrics import (
     roc_auc_score,
     average_precision_score,
     confusion_matrix,
+    roc_curve,
+    auc,
 )
 
 # set page config FIRST
@@ -100,7 +104,7 @@ def evaluate_model(model, X_train, y_train, X_test, y_test, threshold=0.5):
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
     cm = {"TN": tn, "FP": fp, "FN": fn, "TP": tp}
 
-    return metrics, cm
+    return metrics, cm, y_prob
 
 
 # ---------- Sidebar ----------
@@ -119,6 +123,11 @@ if XGB_AVAILABLE:
 model_name = st.sidebar.selectbox("Model", model_options)
 
 show_full_compare = st.sidebar.checkbox("Show full model comparison", value=True)
+
+# ---------- BentoML API Sidebar ----------
+st.sidebar.subheader("BentoML API")
+use_bento_api = st.sidebar.checkbox("Use BentoML API", value=False)
+bento_api_url = st.sidebar.text_input("Predict URL", "http://127.0.0.1:3000/predict")
 
 # ---------- Data ----------
 weights = [1 - minority_pct / 100.0, minority_pct / 100.0]
@@ -141,7 +150,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 # ---------- Selected model ----------
 try:
     model = get_model(model_name, use_balancing, y_train=y_train)
-    metrics, cm = evaluate_model(model, X_train, y_train, X_test, y_test, threshold=threshold)
+    metrics, cm, y_prob = evaluate_model(model, X_train, y_train, X_test, y_test, threshold=threshold)
 except Exception as e:
     st.error(f"Training failed for {model_name}: {e}")
     st.stop()
@@ -169,9 +178,10 @@ st.bar_chart(pd.DataFrame([cm], index=[model_name]))
 
 # ---------- Comparison: Selected vs Dummy ----------
 st.subheader("Comparison Graph (Selected vs Dummy Baseline)")
+dummy_prob = None
 try:
     dummy_model = get_model("Dummy (most_frequent)", use_balancing=False)
-    dummy_metrics, _ = evaluate_model(dummy_model, X_train, y_train, X_test, y_test, threshold=0.5)
+    dummy_metrics, _, dummy_prob = evaluate_model(dummy_model, X_train, y_train, X_test, y_test, threshold=0.5)
 
     compare_df = pd.DataFrame([
         {"model": "Dummy (most_frequent)", **dummy_metrics},
@@ -180,6 +190,26 @@ try:
     compare_cols = ["accuracy", "balanced_accuracy", "precision", "recall", "f1_score", "pr_auc", "roc_auc"]
     st.dataframe(compare_df[["model"] + compare_cols], use_container_width=True)
     st.bar_chart(compare_df.set_index("model")[["accuracy", "precision", "recall", "f1_score", "pr_auc"]].fillna(0))
+
+    # ROC Curve comparison for clear visual difference
+    if (dummy_prob is not None) and (y_prob is not None):
+        st.subheader("ROC Curve (Selected vs Dummy)")
+        fpr_d, tpr_d, _ = roc_curve(y_test, dummy_prob)
+        fpr_s, tpr_s, _ = roc_curve(y_test, y_prob)
+
+        auc_d = auc(fpr_d, tpr_d)
+        auc_s = auc(fpr_s, tpr_s)
+
+        fig, ax = plt.subplots(figsize=(7, 5))
+        ax.plot(fpr_d, tpr_d, linestyle="--", label=f"Dummy (AUC={auc_d:.3f})")
+        ax.plot(fpr_s, tpr_s, label=f"{model_name} (AUC={auc_s:.3f})")
+        ax.plot([0, 1], [0, 1], "k:", label="Random baseline")
+        ax.set_xlabel("False Positive Rate")
+        ax.set_ylabel("True Positive Rate")
+        ax.set_title("ROC-AUC Comparison")
+        ax.legend()
+        ax.grid(alpha=0.3)
+        st.pyplot(fig)
 except Exception as e:
     st.warning(f"Could not build selected-vs-dummy comparison: {e}")
 
@@ -194,7 +224,7 @@ if show_full_compare:
     for mname in full_models:
         try:
             m = get_model(mname, use_balancing=use_balancing, y_train=y_train)
-            m_metrics, _ = evaluate_model(m, X_train, y_train, X_test, y_test, threshold=threshold)
+            m_metrics, _, _ = evaluate_model(m, X_train, y_train, X_test, y_test, threshold=threshold)
             rows.append({"model": mname, **m_metrics})
         except Exception as e:
             rows.append({"model": mname, "error": str(e)})
@@ -217,3 +247,82 @@ if show_full_compare:
 
 st.subheader("All Metrics (Selected Model)")
 st.dataframe(pd.DataFrame([metrics]), use_container_width=True)
+
+# ---------- BentoML API Section ----------
+if use_bento_api:
+    st.subheader("🔌 Live API Inference (BentoML)")
+
+    # API status check
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Check API Status"):
+            try:
+                r = requests.get(bento_api_url.replace("/predict", "/healthz"), timeout=5)
+                if r.ok:
+                    st.success("API is running ✅")
+                else:
+                    st.warning(f"API responded with status: {r.status_code}")
+            except Exception:
+                st.error("API is not reachable. Start it with: bentoml serve inference_service:AccuracyParadoxService")
+    with col2:
+        sample_idx = st.number_input(
+            "Sample index from test set",
+            min_value=0,
+            max_value=len(X_test) - 1,
+            value=0,
+            step=1,
+        )
+
+    # Show sample features
+    with st.expander("Sample features (X_test row)"):
+        st.write(X_test[int(sample_idx)].tolist())
+        st.write(f"Actual label: **{int(y_test[int(sample_idx)])}**")
+
+    # API call + history
+    if "api_history" not in st.session_state:
+        st.session_state.api_history = []
+    if st.button("Predict via API"):
+        payload = {"features": X_test[int(sample_idx)].tolist()}
+        try:
+            t0 = time.time()
+            resp = requests.post(bento_api_url, json=payload, timeout=30)
+            latency_ms = (time.time() - t0) * 1000
+
+            if resp.ok:
+                data = resp.json()
+                pred = data.get("prediction")
+                prob = data.get("probability", 0.0)
+                actual = int(y_test[int(sample_idx)])
+                correct = pred == actual
+
+                st.success(f"Prediction: **{pred}** | Probability: **{prob:.4f}**")
+                st.caption(f"Latency: {latency_ms:.2f} ms")
+                if correct:
+                    st.info("✅ Correct prediction")
+                else:
+                    st.warning(f"❌ Wrong prediction (actual = {actual})")
+
+                # Save to history
+                st.session_state.api_history.append({
+                    "sample_idx": int(sample_idx),
+                    "prediction": pred,
+                    "probability": round(prob, 4),
+                    "actual": actual,
+                    "correct": correct,
+                    "latency_ms": round(latency_ms, 2),
+                })
+            else:
+                st.error(f"API Error: {resp.text}")
+        except Exception as e:
+            st.error(f"API call failed: {e}")
+            st.info("Make sure BentoML service is running: bentoml serve inference_service:AccuracyParadoxService --port 3000")
+
+    # API call history table
+    if st.session_state.api_history:
+        st.subheader("API Call History")
+        history_df = pd.DataFrame(st.session_state.api_history)
+        st.dataframe(history_df, use_container_width=True)
+
+        if st.button("Clear History"):
+            st.session_state.api_history = []
+            st.rerun()
