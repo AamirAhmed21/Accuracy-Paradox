@@ -13,4 +13,5 @@ fastapi
 uvicorn
 bentoml
 xgboost
+streamlit
 # -e .
