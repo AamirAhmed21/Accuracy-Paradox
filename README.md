@@ -29,7 +29,7 @@ All experiments, model runs, parameters, and comparison charts are tracked publi
 
 ### 1. Metrics Table — All Models Side by Side
 
-![Metrics Table](assets/screenshots/dagshub_metrics.png)
+![Metrics Table](assets/screenshots/dagshub_metrics%20.png)
 
 This screenshot shows the **DagsHub experiment metrics table** where every model run is recorded with its full evaluation results.
 
@@ -51,7 +51,7 @@ All four models show very high accuracy (~99%). However, when you look at `recal
 
 ### 2. Model Comparison Chart — Visual Metric Breakdown
 
-![Comparison Chart](assets/screenshots/dagshub_chart.png)
+![Comparison Chart](assets/screenshots/dagshub_Chart%20.png)
 
 This screenshot shows the **DagsHub visual comparison chart**, which plots all model runs together across multiple metrics simultaneously.
 
@@ -71,7 +71,7 @@ Any reviewer, stakeholder, or supervisor who looks at accuracy alone would concl
 
 ### 3. Coordinates Plot — Per-Run Parameter and Metric Trace
 
-![Coordinates Plot](assets/screenshots/dagshub_coordinates.png)
+![Coordinates Plot](assets/screenshots/dagshub_Parallel_Coordinate.png)
 
 This screenshot shows the **DagsHub parallel coordinates plot**, which traces each experiment run as a line across all logged parameters and metrics together.
 
@@ -87,6 +87,29 @@ Each model run is represented as one line passing through all tracked values: hy
 
 **Key finding:**
 The coordinates plot is a powerful tool for understanding which parameters and settings actually improve the metrics that matter. It confirms that simply adding model complexity (from Dummy to XGBoost) does not solve the imbalance problem — you must actively address the class imbalance.
+
+---
+
+### 4. Streamlit Interactive Demo — Live Exploration Tool
+
+![Streamlit App](assets/screenshots/streamlit_app.png)
+
+This screenshot shows the **interactive Streamlit application** built to let anyone explore the accuracy paradox hands-on without writing a single line of code.
+
+**What we built:**
+A full interactive dashboard where the user can control every aspect of the experiment in real time using sidebar controls — no code required.
+
+**What the app shows:**
+- **Model selector** — choose between DummyClassifier, LogisticRegression, RandomForest, and XGBoost
+- **Class balancing toggle** — switch balancing on/off and watch Recall jump from 0% to 40%+ instantly
+- **Decision threshold slider** — raise the threshold and see accuracy increase while recall drops to zero, demonstrating how accuracy can be gamed
+- **Confusion matrix** — visually shows True Positives, False Negatives (missed disease), False Positives, and True Negatives
+- **ROC curve** — compares the selected model against the Dummy baseline; a model with area = 0.5 is no better than random
+- **Full model comparison chart** — all 4 models side by side across all metrics
+- **Live API inference** — sends a real test sample to the BentoML REST API and displays the prediction and probability in real time
+
+**Key finding:**
+The Streamlit app makes the accuracy paradox tangible and interactive. When a user turns off balancing, every model's recall drops to zero while accuracy stays at 99% — making the paradox impossible to miss. This tool bridges the gap between raw numbers and real understanding.
 
 ---
 
