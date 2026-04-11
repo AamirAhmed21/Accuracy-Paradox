@@ -1,5 +1,6 @@
 import numpy as np
 import bentoml
+import os
 from pydantic import BaseModel
 
 
@@ -11,7 +12,12 @@ class PredictResponse(BaseModel):
 @bentoml.service(name="accuracy_paradox_service")
 class AccuracyParadoxService:
     def __init__(self):
-        self.model = bentoml.sklearn.load_model("accuracy_paradox_model:latest")
+        self.model_tag = os.getenv("BENTO_MODEL_TAG", "accuracy_paradox_model:latest")
+        self.model = bentoml.sklearn.load_model(self.model_tag)
+
+    @bentoml.api
+    def model_info(self) -> dict:
+        return {"model_tag": self.model_tag}
 
     @bentoml.api
     def predict(self, features: list[float]) -> PredictResponse:

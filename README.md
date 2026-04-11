@@ -13,7 +13,7 @@ This happens on **imbalanced datasets** — where one class (e.g. "no disease") 
 
 A model that simply predicts "no disease" for every single patient will achieve **99% accuracy** — but it will never detect a single real disease case. This is clinically dangerous and statistically deceptive.
 
-This project demonstrates this paradox using a **synthetic, highly imbalanced dataset (99:1 class ratio)** and proves why accuracy alone cannot be trusted.
+This project demonstrates this paradox on a **real publicly available Kaggle credit-card fraud dataset** and also includes **synthetic scenario generation** to test controlled imbalance conditions. It proves why accuracy alone cannot be trusted.
 
 ---
 
@@ -22,6 +22,15 @@ This project demonstrates this paradox using a **synthetic, highly imbalanced da
 All experiments, model runs, parameters, and comparison charts are tracked publicly:
 
 🔗 **DagsHub Experiments**: https://dagshub.com/AamirAhmed21/Accuracy-Paradox/experiments
+
+---
+
+## Data Used
+
+- **Primary dataset (real):** Kaggle Credit Card Fraud (`creditcard.csv`)
+- **Target column:** `Class` (mapped to `target` inside the pipeline)
+- **Class distribution:** Highly imbalanced (majority non-fraud, minority fraud)
+- **Secondary dataset:** Synthetic scenario generator for controlled imbalance experiments
 
 ---
 
@@ -100,6 +109,7 @@ This screenshot shows the **interactive Streamlit application** built to let any
 A full interactive dashboard where the user can control every aspect of the experiment in real time using sidebar controls — no code required.
 
 **What the app shows:**
+
 - **Model selector** — choose between DummyClassifier, LogisticRegression, RandomForest, and XGBoost
 - **Class balancing toggle** — switch balancing on/off and watch Recall jump from 0% to 40%+ instantly
 - **Decision threshold slider** — raise the threshold and see accuracy increase while recall drops to zero, demonstrating how accuracy can be gamed
@@ -144,7 +154,7 @@ This is the core proof: **fixing the model requires sacrificing accuracy** — w
 | Experiment Tracking | DagsHub Experiments                                              |
 | Model Serving       | BentoML (REST API)                                               |
 | Interactive Demo    | Streamlit                                                        |
-| Data                | Synthetic imbalanced dataset (99:1 ratio, 20 features)           |
+| Data                | Real Kaggle credit card fraud + synthetic scenario data          |
 
 ---
 
@@ -180,13 +190,13 @@ python main.py
 **Step 2 — Start BentoML REST API**
 
 ```bash
-python -m bentoml serve inference_service:AccuracyParadoxService --host 127.0.0.1 --port 3000
+conda run -n venv python -m bentoml serve inference_service:AccuracyParadoxService --host 127.0.0.1 --port 3000
 ```
 
 **Step 3 — Start Streamlit app**
 
 ```bash
-python -m streamlit run streamlit_app/game.py
+conda run -n venv python -m streamlit run streamlit_app/game.py
 ```
 
 ---
@@ -222,11 +232,24 @@ This separation of UI (Streamlit) and model backend (BentoML REST API) mirrors a
 ## Interactive Streamlit App Features
 
 - Select any of the 4 models and compare against Dummy baseline
-- Toggle **class balancing on/off** to watch Recall jump from 0% to 40%+
+- Select balancing method (**No balancing / Class weight / SMOTE**) and compare behavior
 - Adjust **decision threshold** and observe the accuracy vs recall tradeoff live
 - View **confusion matrix** — see False Negatives (missed disease) highlighted
 - View **ROC curve** comparing Dummy vs selected model visually
 - Live **API inference** — send real test samples to BentoML and see predictions
+
+---
+
+## Presentation and Video Plan
+
+Use this order for your viva/demo video:
+
+1. Problem statement: high accuracy can hide fraud-detection failure on imbalanced data.
+2. Data proof: show class distribution from Kaggle dataset.
+3. Baseline paradox: show high accuracy with weak minority detection.
+4. Resolution: show class weighting / SMOTE and metric improvements (Recall/F1/PR-AUC).
+5. API demo: select sample index, call `/predict`, explain prediction and probability.
+6. Conclusion: accuracy alone is misleading; minority-sensitive metrics are required.
 
 ---
 

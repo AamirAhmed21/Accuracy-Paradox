@@ -1,5 +1,6 @@
 import sys
-from venv import logger
+import os
+import pandas as pd
 
 from Accuracyparadox.exception.exception import CustomException
 from Accuracyparadox.logging import logging
@@ -32,10 +33,39 @@ class TrainingPipeline:
             logging.info("Starting Training Pipeline")
             logging.info("─────────────────────────────────────────")
             
-            ## Step 1: Generate synthetic data
-            synthetic_data_generator = SyntheticDataGenerator()
-            raw_data_path = synthetic_data_generator.generate_data()
-            logging.info(f"Synthetic data generated at: {raw_data_path}")
+            # Step 1: Load real Kaggle dataset when available, else fallback to synthetic
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+            kaggle_data_path = os.path.join(project_root, "Data", "creditcard", "creditcard.csv")
+
+            if os.path.exists(kaggle_data_path):
+                logging.info(f"Found Kaggle dataset at: {kaggle_data_path}")
+                real_df = pd.read_csv(kaggle_data_path)
+
+                if "Class" in real_df.columns and "target" not in real_df.columns:
+                    real_df = real_df.rename(columns={"Class": "target"})
+
+                if "target" not in real_df.columns:
+                    raise CustomException(
+                        "Input dataset must contain either 'Class' or 'target' column.",
+                        sys,
+                    )
+
+                prepared_raw_dir = os.path.join(project_root, "Data", "raw")
+                os.makedirs(prepared_raw_dir, exist_ok=True)
+                raw_data_path = os.path.join(prepared_raw_dir, "creditcard_prepared.csv")
+                real_df.to_csv(raw_data_path, index=False)
+                logging.info(f"Prepared real dataset saved to: {raw_data_path}")
+                logging.info(f"Prepared dataset shape: {real_df.shape}")
+                logging.info(
+                    f"Target distribution: {real_df['target'].value_counts(normalize=True).to_dict()}"
+                )
+            else:
+                logging.warning(
+                    f"Kaggle dataset not found at {kaggle_data_path}. Falling back to synthetic data."
+                )
+                synthetic_data_generator = SyntheticDataGenerator()
+                raw_data_path = synthetic_data_generator.generate_data()
+                logging.info(f"Synthetic data generated at: {raw_data_path}")
             
             ## Step 2: Data Ingestion
             data_ingestion_config = DataIngestionConfig(training_pipeline_config=self.training_pipeline_config)

@@ -409,7 +409,7 @@ experiment_threshold = st.slider(
     value=0.30,
     step=0.05,
 )
-st.caption("Tip: use 0.20–0.35 to make minority detection differences easier to see.")
+st.caption("0.35 to make minority detection differences easier to see.")
 
 if st.button("Run resolution experiment"):
     with st.spinner("Running controlled before-vs-after experiments..."):
