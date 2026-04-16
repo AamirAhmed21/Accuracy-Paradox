@@ -322,7 +322,14 @@ st.dataframe(
 )
 
 st.subheader("Confusion Components Graph")
-st.bar_chart(pd.DataFrame([cm], index=[model_name]))
+cm_chart_df = pd.DataFrame(
+    {
+        "Count": [cm["TN"], cm["FP"], cm["FN"], cm["TP"]],
+    },
+    index=["TN", "FP", "FN", "TP"],
+)
+st.bar_chart(cm_chart_df)
+st.caption("In highly imbalanced data, TN can dominate; compare Recall/F1/PR-AUC to judge real fraud detection quality.")
 
 # ---------- Comparison: Selected vs Dummy ----------
 st.subheader("Comparison Graph (Selected vs Dummy Baseline)")
