@@ -42,14 +42,18 @@ MLFLOW_EXPERIMENT_NAME = 'AccuracyParadox_Experiment'
 
 def _configure_mlflow_tracking() -> None:
     """Use DagsHub as the MLflow backend when repo settings are available."""
-    repo_owner = os.getenv("DAGSHUB_REPO_OWNER")
-    repo_name = os.getenv("DAGSHUB_REPO_NAME")
+    repo_owner = os.getenv("DAGSHUB_REPO_OWNER", "").strip()
+    repo_name = os.getenv("DAGSHUB_REPO_NAME", "").strip()
 
-    if dagshub and repo_owner and repo_name:
+    if not dagshub or not repo_owner or not repo_name:
+        logging.info("Using local MLflow tracking (set DAGSHUB_REPO_OWNER and DAGSHUB_REPO_NAME to enable DagsHub)")
+        return
+
+    try:
         dagshub.init(repo_owner=repo_owner, repo_name=repo_name, mlflow=True)
         logging.info(f"MLflow tracking configured for DagsHub repo: {repo_owner}/{repo_name}")
-    else:
-        logging.info("Using local MLflow tracking (set DAGSHUB_REPO_OWNER and DAGSHUB_REPO_NAME to enable DagsHub)")
+    except Exception as e:
+        logging.warning(f"DagsHub tracking unavailable, using local MLflow instead: {e}")
 
 class ModelTrainer:
     def __init__(self, model_trainer_config: ModelTrainerConfig, data_transformation_artifact: DataTransformationArtifact):
